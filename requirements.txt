@@ -1,0 +1,11 @@
+# Additions on top of the DSMLP scipy-ml image (keep its CUDA-enabled PyTorch). Not a full environment lock.
+diffusers==0.30.3
+transformers==4.44.2
+accelerate==0.34.2
+huggingface_hub==0.24.7
+safetensors
+numpy
+scipy
+Pillow
+matplotlib
+tqdm

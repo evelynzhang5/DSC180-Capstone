@@ -1,0 +1,14 @@
+# Downloaded code, data and model weights
+downloads/
+*.pt
+*.pkl
+*.npz
+
+# Run outputs (generated images, activations, checkpoints)
+outputs/
+
+# Python and editor clutter
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+.DS_Store
