@@ -229,13 +229,15 @@ class SD:
                     eh = self.eps(z, t, cond).float()
                 finally:
                     h.d, h.rows = None, None
+                if narfm.get("same_batch"):     # audit: hook-off reference with the hook-on call's batch shape
+                    ec_ref = self.eps(z, t, cond).float()     # (upstream RFMCFGWrapper calls the model twice alike)
             e = eu + CFG * (ec - eu)
             a = self.alpha_at(k)
             zf = z.float()
             x0 = (zf - (1 - a) ** 0.5 * e) / a ** 0.5            # every step goes through x0 (same arithmetic)
             if on:
                 x0h = (zf - (1 - a) ** 0.5 * eh) / a ** 0.5
-                x0c = (zf - (1 - a) ** 0.5 * ec) / a ** 0.5
+                x0c = (zf - (1 - a) ** 0.5 * (ec_ref if narfm.get("same_batch") else ec)) / a ** 0.5
                 rfm_term = narfm["s"] * (x0h - x0c)               # upstream RFMCFGWrapper, x0 level, no clipping
                 x0 = x0 + rfm_term
                 if narfm.get("na") is not None and narfm["gamma"] != 0:

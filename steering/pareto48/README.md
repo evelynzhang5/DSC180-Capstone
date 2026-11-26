@@ -295,6 +295,71 @@ round 40's max(2, 0.2 r) at 768 px converted to the 512 scale.
 - The pod was deleted after the run.
 - The confirmation set was not generated, because no method passed the development gate (rule 6).
 
+## Audit of round 48 (Nov 26, 2026): plan, frozen before it ran
+
+Requested before any further steering sweep. Dev cases only; **the 12 confirmation prompts stay ungenerated.** Script:
+`audit48.py`; outputs in `outputs/pareto48/audit/`; copied to `results/audit/`.
+
+**A. Numerics under identical execution conditions** (10 eligible dev cases).
+- **Per-pixel |Δ| statistics:** mean, p50, p90, p99, p99.9, max, fraction nonzero (0-255 scale).
+- **Metric deltas:** scene change, disk-fit r, DoG ratio, subject DINOv2.
+- **Pairs:**
+  1. baseline rerun vs the saved round 48 reference (same code, new process);
+  2. NA-RFM s = 0, γ = 0 (hook armed) vs baseline;
+  3. NA-RFM w = 0, s = 4 with round 48's mixed batch shapes (hook-on batch-1 vs hook-off taken from the batch-2 CFG
+     call) vs baseline;
+  4. the same, but with the hook-off reference computed in a batch-1 call like the hook-on call (`same_batch`;
+     upstream `RFMCFGWrapper` calls the model twice alike);
+  5. baseline computed as two batch-1 calls (the floor) vs baseline;
+  6. TFG ρ = μ = 0 vs baseline;
+  7. TFG ρ = μ = 0 vs upstream TFG's own unguided `BaseGuidance.guide_step` (identical arithmetic);
+  8. round 48's TFG late-third m = 1 outputs rerun vs the saved ones.
+- **Sound if:**
+  - 1, 2, 4, 7 and 8 are bit-identical;
+  - in 3, 5 and 6, no metric moves by more than the decision resolution: scene change 0.01, r 0.25 px, DoG ratio
+    0.02, DINOv2 0.01 (median over cases).
+- **Is round 48 NA-RFM sensitive to the batch-shape choice?** NA-RFM m 0.5 late and m 1 all, mixed vs same_batch,
+  compared on all measures.
+
+**B. Method comparison on shared eligible scenes.** The 9 cases eligible for every arm (d10 has no BokehDiff render).
+- per-arm counts;
+- paired comparison with BokehDiff on "responds ∧ preserved" (exact two-sided sign test on discordant cases);
+- paired scene-change differences (bootstrap 95%).
+
+**C. TFG: offline prediction accuracy vs intervention effectiveness.**
+- **Re-run with tracing:** TFG late m 1 and late m 2 (10 cases), and all-steps m 0.5 (4 cases: d01, d03, d05, d07),
+  with round 48's settings. At every guided step, record:
+  - the clean-image estimate before the x0 update (pre) and after it (post), decoded;
+  - P(pre) and P(post), gradient norms, μ and ρ;
+  - a finite-difference check of the guidance gradient (3 steps per case, first configuration).
+  Upstream code runs unchanged; only wrappers record.
+- **Independent measures on every pre/post pair** (aligned by construction): disk-fit added radius on the reference's
+  frozen background tiles, background DoG ratio, and the fraction of the update's energy above 0.25 cycles/px.
+- **Second predictor P2:**
+  - same architecture, a different seed;
+  - trained on the half of the train scenes with even `sha1` (P used all of them);
+  - same validation gates.
+  - P2 reads every pre/post pair and every final output.
+- **Offline accuracy, separately:**
+  - P and P2 on known background disk blur r ∈ {0, 1, 2, 3, 4, 6} applied to the dev references (SD domain) and to
+    the last pre estimate of each traced run (in-trajectory domain);
+  - slope and Spearman of reading against true r;
+  - disk-fit recovery on the same images.
+- **Classification:**
+  - **E1, score gain without blur:** in ≥ 6/10 late-m1 or late-m2 cases, the final P reading exceeds the reference's
+    by ≥ 1 px, while the disk-fit gain is ≤ 0.5 × the P gain (or unmeasurable) and the DoG ratio is ≥ 0.9.
+  - **E2, P accurate offline in this domain:** on the known-blur controls, slope 0.7-1.3 and Spearman ≥ 0.9.
+  - **E3, specific to P:** P2 reads ≤ 50% of P's gain on the same outputs (median over E1 cases).
+  - **E4, sound guidance:** gradients finite; finite-difference relative error ≤ 10% (median).
+- **Recommendation rule:**
+  - **E1 ∧ E2 ∧ E3 ∧ E4 → predictor exploitation.** A small late-only TFG ensemble experiment is justified (proposed,
+    not launched).
+  - **E1 ∧ E4 but not E3** (an independently trained predictor is fooled too) → score gain without measurable blur
+    is not specific to P. BokehDiff improvements are the more productive direction.
+  - **Not E1** (late guidance barely moves P) → TFG at late steps is too weak. Same recommendation.
+  - **Not E2** → P is inaccurate on SD images, an offline accuracy problem. Reported; no ensemble experiment.
+  - **Not E4** → a guidance bug. Fix before any interpretation.
+
 ## Results
 
 Files: `results/` (copied from `outputs/pareto48/` on DSMLP). Generated images, activations, `P.pt`, the RFM directions

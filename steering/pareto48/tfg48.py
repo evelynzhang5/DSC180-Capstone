@@ -145,11 +145,12 @@ class PairSet:
         return y, F.avg_pool2d(rm[:, None], 8)[:, 0]
 
 
-def train(out, pairs, iters=2500, bs=16, smoke=False):
+def train(out, pairs, iters=2500, bs=16, smoke=False, seed=0, name="P.pt", train_ids=None):
     dev = "cuda"
-    tr, va = PairSet(out, pairs, "train", dev), PairSet(out, pairs, "val", dev)
-    rng = np.random.default_rng(0)
-    torch.manual_seed(0)
+    tp = pairs if train_ids is None else [p for p in pairs if p["split"] != "train" or p["id"] in train_ids]
+    tr, va = PairSet(out, tp, "train", dev), PairSet(out, pairs, "val", dev)
+    rng = np.random.default_rng(seed)
+    torch.manual_seed(seed)
     P = BlurNet().to(dev)
     opt = torch.optim.AdamW(P.parameters(), lr=2e-3, weight_decay=1e-4)
     iters = 60 if smoke else iters
@@ -174,24 +175,24 @@ def train(out, pairs, iters=2500, bs=16, smoke=False):
             C.log(f"  P it {it}: train L1 {float(loss):.3f}, val L1 {vl:.3f} [{time.time() - t0:.0f} s]")
             if vl < best:
                 best = vl
-                torch.save(P.state_dict(), out / "tfg" / "P.pt")
+                torch.save(P.state_dict(), out / "tfg" / name)
     return dict(best_val_l1=best, hist=hist, n_params=sum(p.numel() for p in P.parameters()),
                 n_train=len(tr.ids), n_val=len(va.ids), seconds=time.time() - t0)
 
 
-def load_P(out, device="cuda"):
+def load_P(out, device="cuda", name="P.pt"):
     P = BlurNet().to(device)
-    P.load_state_dict(torch.load(out / "tfg" / "P.pt", map_location=device))
+    P.load_state_dict(torch.load(out / "tfg" / name, map_location=device))
     P.eval().requires_grad_(False)
     return P
 
 
 @torch.no_grad()
-def validate(out, pairs):
+def validate(out, pairs, name="P.pt", report="validation.json"):
     """README predictor gates on test scenes; real-pair transfer on val+test."""
     from scipy.stats import spearmanr
     dev = "cuda"
-    P = load_P(out, dev)
+    P = load_P(out, dev, name)
     te = PairSet(out, pairs, "test", dev)
     res = dict(n_test=len(te.ids))
     rows = []
@@ -252,7 +253,7 @@ def validate(out, pairs):
     res["real_pairs_n"] = len(pr)
     res["real_pairs_mae"] = float(np.mean(np.abs(np.array(pr) - np.array(rr)))) if pr else float("nan")
     res["ok"] = bool(res["gate_blur"] and res["gate_contrast"])
-    C.jdump(dict(summary=res, rows=rows), out / "tfg" / "validation.json")
+    C.jdump(dict(summary=res, rows=rows), out / "tfg" / report)
     return res
 
 
