@@ -17,6 +17,26 @@ noted where it exists.
 - **Implication for the Pareto study:** expect a clear trade-off between blur and scene change, controlled by strength
   and by which steps are steered.
 
+## Steering trade-off pilot (branch `q2-pareto48`, Nov 25, 2026)
+
+- **Setup.**
+  - SD 1.5: 512 px, DDIM 50, CFG 7.5.
+  - Both methods are trained on 221 same-scene sharp/background-blurred CamEdit50K pairs, so blur is not confounded with
+    content.
+  - Target: 3 px of added background blur.
+  - Scene change is measured against the reference blurred by the same amount.
+  - 10 dev prompts; 12 held-out prompts kept untouched.
+- **NA-RFM** (full method: RFM hook, x0 CFG, latent noise alignment; mid_block):
+  - late-third steering keeps the scene (10/10) but adds ~1 px;
+  - steering early or over all steps blurs by regenerating the scene (scene change 0.47-0.55);
+  - a random direction does as well as the learned one there.
+- **TFG** (verified upstream code; blur predictor passed its blur-vs-contrast tests): guidance drives the predictor's
+  reading to 3 px while the independent measure sees 1-1.9 px and little loss of background detail.
+- **SD + BokehDiff** (round 45 controller): blurs and keeps the scene in 8/9, on target in 7/9.
+- **Verdict:** no advantage established for either steering method; the held-out confirmation was not run.
+- **Next:** late-third TFG guided by an ensemble of predictors and judged by a held-out one, to tell predictor
+  exploitation apart from late steps being unable to create blur.
+
 ## BokehDiff (one-step diffusion bokeh editor)
 
 **Inputs and controls.**
@@ -86,3 +106,4 @@ helped; internal interventions we tested did not beat them.
 | BokehDiff vs Bokehlicious | `q2-compare40` |
 | Depth-aware control, precision check, fresh-scene confirmation | `q2-control42`, `q2-precision44`, `q2-confirm45` |
 | Transparent objects | `q2-transparent43`, `q2-feature46`, `q2-separate47` |
+| Steering trade-off pilot (this repository) | `q2-pareto48` |

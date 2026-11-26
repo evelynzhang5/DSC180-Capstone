@@ -20,8 +20,15 @@ where should that control live:
 | Blur calibration: a depth-aware monotone curve picks BokehDiff's blur setting K per image | Target attainment 33% (BokehDiff, one fixed K) → 41% (linear rule) → **73%** on 21 fresh generated scenes, same render cost | `bokeh/controller/` |
 | Transparent-layer separation: a small CNN splits glass surface / background / mixing fraction, then frozen BokehDiff blurs only the background | **−36%** error vs blending two renders on unseen synthetic backgrounds; does not yet generalise to new glass patterns or real glass | `bokeh/transparency/` |
 | SD 1.5 depth-of-field steering (RFM / NA-RFM directions, masking, timing) | Steering softens foreground and background alike; masking helps sharpness selectivity but the scene still changes; late steering keeps the layout but gives little blur | `steering/` |
+| Steering trade-off pilot: NA-RFM vs TFG vs BokehDiff (same-scene CamEdit training pairs, 10 dev prompts) | Neither steering method passes: best "blurs and keeps the scene" 5/10 (NA-RFM) and 4/10 (TFG), vs **8/9** for SD + BokehDiff with the calibrated controller. Late steering keeps the scene but adds ~1 px of a 3 px target; early/all-step steering regenerates the scene. TFG satisfies its own blur predictor without visible blur | branch `q2-pareto48`, `steering/pareto48/` |
 
 Details and numbers: [docs/findings.md](docs/findings.md). Figures: `figures/`.
+
+**Experiment branches** (one per experiment; `main` keeps only this index):
+
+| Branch | Experiment | Status |
+|---|---|---|
+| `q2-pareto48` | Steering trade-off pilot: NA-RFM vs TFG vs BokehDiff on SD 1.5 (`steering/pareto48/README.md`) | Done Nov 25, 2026: no steering advantage on dev; held-out set untouched |
 
 ## Layout
 
