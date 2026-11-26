@@ -82,7 +82,8 @@ def pareto_plot(ctx, split, path, keys):
         axs[1].annotate(label, (np.median([r["dog_bg"] for r in rr]), y), fontsize=6, xytext=(3, 2),
                         textcoords="offset points")
     axs[0].set_xlabel("median |delivered blur − 3 px| (disk fit; measurable outputs only)")
-    axs[0].set_ylabel("median scene change vs blur-matched reference (1 − DINOv2 patch cosine)")
+    axs[0].set_ylabel("median scene change\n(1 − DINOv2 patch cosine vs blur-matched reference)")
+    axs[1].set_ylabel("median scene change")
     axs[1].set_xlabel("median background DoG band-energy ratio (alignment-free; 1 = no change)")
     axs[1].invert_xaxis()
     for a in axs:
@@ -90,7 +91,8 @@ def pareto_plot(ctx, split, path, keys):
     axs[0].set_title(f"{split}: blur-target error vs scene change")
     axs[1].set_title(f"{split}: background detail loss vs scene change (all outputs)")
     fig.tight_layout()
-    fig.savefig(path, dpi=130)
+    fig.subplots_adjust(left=0.08)
+    fig.savefig(path, dpi=130, bbox_inches="tight", pad_inches=0.15)
     plt.close(fig)
 
 
