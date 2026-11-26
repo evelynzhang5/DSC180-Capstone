@@ -1,0 +1,270 @@
+{
+ "dtypes": {
+  "unet": "torch.float16",
+  "vae": "torch.float32"
+ },
+ "narfm_w0_mid_d01": {
+  "max": 16.0,
+  "mean": 0.2602653503417969
+ },
+ "narfm_w0_mid_d03": {
+  "max": 55.0,
+  "mean": 0.8448499043782552
+ },
+ "narfm_hook_mid": {
+  "applied": 17,
+  "calls": 67
+ },
+ "narfm_w0_attn_d01": {
+  "max": 16.0,
+  "mean": 0.2602653503417969
+ },
+ "narfm_w0_attn_d03": {
+  "max": 55.0,
+  "mean": 0.8448499043782552
+ },
+ "narfm_hook_attn": {
+  "applied": 17,
+  "calls": 67
+ },
+ "narfm_w0_late_d01": {
+  "max": 16.0,
+  "mean": 0.2602653503417969
+ },
+ "narfm_w0_late_d03": {
+  "max": 55.0,
+  "mean": 0.8448499043782552
+ },
+ "narfm_hook_late": {
+  "applied": 17,
+  "calls": 67
+ },
+ "narfm_na_ratio": 0.4778454154729843,
+ "narfm_gamma0": 1.0,
+ "narfm_m2_mid": [
+  {
+   "case": "d01",
+   "dog_bg": 0.5615077930525607,
+   "r": NaN,
+   "std": 71.05770764536861
+  },
+  {
+   "case": "d03",
+   "dog_bg": 0.5117195975965857,
+   "r": NaN,
+   "std": 64.80294576460099
+  }
+ ],
+ "narfm_m2_attn": [
+  {
+   "case": "d01",
+   "dog_bg": 0.17353790607369945,
+   "r": NaN,
+   "std": 69.81132884609691
+  },
+  {
+   "case": "d03",
+   "dog_bg": 0.19016924124123036,
+   "r": NaN,
+   "std": 51.56207343044015
+  }
+ ],
+ "narfm_m2_late": [
+  {
+   "case": "d01",
+   "dog_bg": 0.12025122454694298,
+   "r": NaN,
+   "std": 68.2463541320988
+  },
+  {
+   "case": "d03",
+   "dog_bg": 0.5624207930572949,
+   "r": NaN,
+   "std": 75.63005031876655
+  }
+ ],
+ "narfm_grids": {
+  "mid": [
+   0.5,
+   1.0,
+   2.0
+  ],
+  "attn": [
+   0.5,
+   1.0,
+   2.0
+  ],
+  "late": [
+   0.5,
+   1.0,
+   2.0
+  ]
+ },
+ "narfm_s_per_image": 6.885199069976807,
+ "tfg_grad_norm": 0.24120184779167175,
+ "tfg_zero_d01": {
+  "max": 21.0,
+  "mean": 0.3092689514160156
+ },
+ "tfg_zero_d03": {
+  "max": 59.0,
+  "mean": 0.7808113098144531
+ },
+ "smoke_json_partial": true,
+ "tfg_m0_tries": [
+  {
+   "m0": 1.0,
+   "readings": [
+    [
+     "d01",
+     2.974752187728882,
+     0.0424397811293602,
+     107.54927325248718,
+     100,
+     150
+    ],
+    [
+     "d03",
+     2.9763166904449463,
+     4.402000904083252,
+     107.559739112854,
+     100,
+     150
+    ]
+   ],
+   "ok": false
+  },
+  {
+   "m0": 4.0,
+   "readings": [
+    [
+     "d01",
+     2.9892163276672363,
+     0.0424397811293602,
+     107.55528616905212,
+     100,
+     150
+    ],
+    [
+     "d03",
+     2.990473747253418,
+     4.402000904083252,
+     107.5765631198883,
+     100,
+     150
+    ]
+   ],
+   "ok": false
+  },
+  {
+   "m0": 16.0,
+   "readings": [
+    [
+     "d01",
+     2.972477674484253,
+     0.0424397811293602,
+     107.54306221008301,
+     100,
+     150
+    ],
+    [
+     "d03",
+     3.013216495513916,
+     4.402000904083252,
+     107.52055072784424,
+     100,
+     150
+    ]
+   ],
+   "ok": false
+  }
+ ],
+ "tfg_m0": 1.0,
+ "tfg_weak": false,
+ "tfg_s_per_steered_step": 2.151045594215393,
+ "memory": {
+  "peak_gb": 10.308137893676758,
+  "total_gb": 11.75,
+  "name": "NVIDIA A30 MIG 2g.12gb"
+ },
+ "tfg_plan": {
+  "iter_steps": 2,
+  "n_cases": 12,
+  "strengths": [
+   0.5,
+   1.0,
+   2.0
+  ],
+  "projected_h": 4.656150199638473
+ },
+ "reductions": [],
+ "checks": {
+  "baseline_repro_d01": true,
+  "baseline_repro_d03": true,
+  "narfm_zero_strength_exact_mid_d01": true,
+  "narfm_w0_tol_mid_d01": true,
+  "narfm_zero_strength_exact_mid_d03": true,
+  "narfm_w0_tol_mid_d03": true,
+  "narfm_hook_steps_mid": true,
+  "narfm_zero_strength_exact_attn_d01": true,
+  "narfm_w0_tol_attn_d01": true,
+  "narfm_zero_strength_exact_attn_d03": true,
+  "narfm_w0_tol_attn_d03": true,
+  "narfm_hook_steps_attn": true,
+  "narfm_zero_strength_exact_late_d01": true,
+  "narfm_w0_tol_late_d01": true,
+  "narfm_zero_strength_exact_late_d03": true,
+  "narfm_w0_tol_late_d03": true,
+  "narfm_hook_steps_late": true,
+  "tfg_grad_finite_nonzero": true,
+  "tfg_zero_tol_d01": true,
+  "tfg_zero_tol_d03": true,
+  "tfg_steps_m0_1_d01": true,
+  "tfg_steps_m0_1_d03": true,
+  "tfg_steps_m0_4_d01": true,
+  "tfg_steps_m0_4_d03": true,
+  "tfg_steps_m0_16_d01": true,
+  "tfg_steps_m0_16_d03": true,
+  "weights_unchanged": true,
+  "memory_fits": true
+ },
+ "elapsed_h": 0.7880894227822621,
+ "revision": {
+  "floor": {
+   "d01": {
+    "max": 40.0,
+    "mean": 0.41011937459309894
+   },
+   "d03": {
+    "max": 42.0,
+    "mean": 0.7009328206380209
+   }
+  },
+  "original_checks": {
+   "narfm_w0_tol_mid_d01": false,
+   "narfm_w0_tol_mid_d03": false,
+   "narfm_w0_tol_attn_d01": false,
+   "narfm_w0_tol_attn_d03": false,
+   "narfm_w0_tol_late_d01": false,
+   "narfm_w0_tol_late_d03": false,
+   "tfg_zero_tol_d01": false,
+   "tfg_zero_tol_d03": false
+  },
+  "original_tfg_m0": 16.0,
+  "original_tfg_weak": true,
+  "tfg_m0_probe": [
+   {
+    "m0": 1.0,
+    "ok": true
+   },
+   {
+    "m0": 4.0,
+    "ok": true
+   },
+   {
+    "m0": 16.0,
+    "ok": true
+   }
+  ]
+ }
+}

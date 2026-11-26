@@ -290,7 +290,132 @@ round 40's max(2, 0.2 r) at 768 px converted to the 512 scale.
 
 ## Status
 
-Running on DSMLP pod `p48`. Every deviation from the Design is listed here with the moment it was decided.
+**Finished Nov 25, 2026, 23:28.**
+- 3.46 GPU-hours on one pod (`p48`), on an A30 MIG slice.
+- The pod was deleted after the run.
+- The confirmation set was not generated, because no method passed the development gate (rule 6).
+
+## Results
+
+Files: `results/` (copied from `outputs/pareto48/` on DSMLP). Generated images, activations, `P.pt`, the RFM directions
+and the noise-alignment filters are on DSMLP only, under
+`/dsmlp/workspaces-fs05/DSC180A_FA26_001/home/yuz271/DSC180-Capstone/outputs/pareto48/`. All counts are over the 10
+eligible dev cases (d02 and d12 excluded, deviation 2).
+
+### 1. Implementation checks
+
+| check | result |
+|---|---|
+| CamEdit pairs (shard 001) | 955 candidate scenes; **321 usable**: 221 train / 49 val / 51 test scenes. Median measured background blur 4.6 px. Rejected: near region also blurred (577), unmeasurable (193) |
+| measurement validation (dev references) | **passed:** known background blur 1-6 px recovered within tolerance in 11/11 measurable cases; shifts and whole-image blur detected; contrast reduction not read as blur. Centroid threshold relaxed to 36.7 px (deviation 3) |
+| NA-RFM directions (scene split) | all 3 layers: test AUC 1.00, paired accuracy 1.00; 10 random directions: median AUC ≈ 0.5 |
+| TFG predictor P (1.07 M parameters) | **all gates passed:** blur Spearman 0.97; MAE 0.33 px (r ≤ 4); contrast ×0.5 → 0.01 px (vs 3.8 px for r = 4); median filter 1.2 px (< r = 2 response 1.6); category spread < 0.1 px |
+| smoke | baseline reproducible; zero-strength NA-RFM bit-identical; hooks fire only at scheduled steps; TFG gradients finite and nonzero; weights unchanged; peak 10.3 / 11.75 GB |
+| smoke tolerance | failed the frozen 2/255 tolerance; passed against the measured numerical floor (deviation 4). The floor: splitting the unsteered CFG batch alone changes pixels by up to 40-42/255 (mean 0.4-0.7) |
+| bugs found on the pod and fixed before any steered output | validation key clash, NaN disk kernel for tiny radii in P's renderer, TFG device type |
+
+### 2. Development findings (10 eligible dev cases)
+
+**Reading the table:**
+- **Blur response:** measured added background blur ≥ 1 px, or (unmeasurable and background detail ≤ 0.8 of the
+  reference).
+- **On target:** within 3 ± 1.33 px.
+- **Preserved:** subject identity, mask, position, sharpness and colour kept, and scene change ≤ 0.15 against the
+  blur-matched reference.
+- **Gate for confirmation:** ≥ 7/10 responding **and** ≥ 7/10 responding ∧ preserved.
+
+| arm | responds | on target | preserved | responds ∧ preserved | median added blur (px, measurable n) | median scene change | s / image |
+|---|---|---|---|---|---|---|---|
+| post-hoc 3 px disk blur (anchor) | 10 | 10 | 9 | 9 | 3.01 (10) | 0.000 | 0.1 |
+| **SD + BokehDiff** (round 45 controller; d10 controller-ineligible) | 9/9 | 7/9 | 8/9 | **8/9** | 3.15 (9) | 0.102 | ~3 (render) |
+| NA-RFM mid_block, m 0.5, late third (best ∧) | 5 | 0 | 10 | **5** | 1.02 (9) | 0.072 | 5 |
+| NA-RFM, m 1, late third | 3 | 0 | 7 | 3 | 1.00 (6) | 0.116 | 5 |
+| NA-RFM, m 1, all steps (selected P and B) | 7 | 0 | 0 | 0 | unmeasurable (0) | 0.470 | 7 |
+| NA-RFM, m 2, all steps | 8 | 0 | 0 | 0 | unmeasurable (0) | 0.550 | 7 |
+| random direction, m 1, all steps | 8 | 0 | 0 | 0 | 1.25 (3) | 0.251 | 7 |
+| TFG, m 0.5, late third (best ∧) | 4 | 1 | 10 | **4** | 1.03 (7) | 0.052 | 37 |
+| TFG, m 1, late third | 4 | 1 | 9 | 4 | 1.15 (7) | 0.084 | 37 |
+| TFG, m 2, late third | 3 | 3 | 7 | 3 | 1.73 (5) | 0.129 | 37 |
+| TFG, m 0.5-2, all steps | 3-6 | 0-1 | 0-1 | 0-1 | 1.1-2.0 (1) | 0.50-0.56 | 107 |
+
+The full table of all 27 arms, with subject DINOv2, mask IoU, ΔE, depth correlation and UNet forward/backward counts,
+is in `results/report.md`. Note that its counts include the two excluded cases.
+
+- **Pareto plot:** `results/pareto_dev.png`. No steering configuration lies near BokehDiff or the post-hoc anchor.
+  Every configuration either changes the scene a lot (early or all steps; scene change 0.23-0.65) or delivers about
+  1 px instead of 3 (late third; on target in ≤ 3/10).
+- **Grids:** `results/grid_dev_best.jpg` (best scene-preserving and selected configurations next to BokehDiff) and
+  `results/grid_dev_*.jpg`.
+- **NA-RFM:**
+  - Layer screen: mid_block 2/4 > attention 1/4, late 1/4.
+  - Only the all-steps configurations respond in ≥ 7/10, and they do it by **regenerating the scene**: the cat's pose
+    changes, the woman becomes a different person, the dog is reframed. The disk fit cannot even align them to the
+    reference (0/10 measurable).
+  - **Random-direction control at the selected configuration:** it responds just as often (8/10 vs 7/10) with *less*
+    scene change (0.25 vs 0.47). At this setting the learned blur direction does no better than a random one.
+  - Late-third steering preserves the scene (10/10 at m 0.5) but adds only about 1 px, and 0/10 are on target.
+- **TFG:**
+  - No configuration responds in ≥ 7/10 ("no repeatable response").
+  - Guidance drives **its own predictor** to the target (P's background reading 2.4-3.0 px), but the independent disk
+    fit measures 1.0-1.9 px. On the late schedule background detail barely changes (DoG ratio 0.97-1.13; 1 = no
+    change).
+  - The guidance mostly satisfies the predictor rather than producing visible blur. This held even though P passed
+    every validation gate on real photos.
+  - TFG costs 37-108 s per image (32-100 UNet backward passes plus VAE-decoder backward passes) vs 5-7 s for NA-RFM.
+- **Matched-blur comparison with BokehDiff:** 0 matched cases for the selected NA-RFM configuration (its outputs are
+  not alignable). So no preservation comparison at equal blur is possible, and none is claimed.
+
+### 3. Held-out confirmation
+
+**Not run.** Neither method passed the development gate:
+- **NA-RFM:** best responds ∧ preserved = 5/10, need 7.
+- **TFG:** no configuration with a repeatable response.
+
+The 12 confirmation prompts were never generated, so they remain untouched for a later test.
+
+### 4. Verdicts
+
+- **NA-RFM: no advantage established.** With same-scene training pairs and the full method (hook + x0 CFG + latent
+  noise alignment), steering SD 1.5 either blurs by changing the scene or keeps the scene and adds about 1 px. The
+  learned direction did not beat a random direction at the setting that responded.
+- **TFG: no advantage established.** A predictor that responds to blur and not to contrast on real photos is still
+  satisfied during sampling without visible blur. The guided image moves the predictor's reading, not the background.
+- **Reference:** SD followed by BokehDiff with the frozen round 45 controller responded and kept the scene in 8/9 dev
+  cases, on target in 7/9. That is despite the transfer limitation (upsampled 512-px SD 1.5 images vs the controller's
+  native 768-px RealVisXL inputs).
+
+### Limitations
+
+- 10 dev cases, one seed each.
+- One checkpoint (SD 1.5) and one shared sampler setting.
+- The layer was chosen on 4 cases.
+- MIG GPU slice.
+- TFG's iter_steps was reduced to 2.
+- Two smoke rules were revised after smoke (deviations 4, 5).
+- "Preserved" uses automatic measures (CLIPSeg, DINOv2, Depth Anything); the grids agree by eye on the cases shown.
+
+### Remaining questions
+
+- Is TFG's failure predictor exploitation? It could be tested by guiding on one predictor and evaluating with an
+  independently trained one.
+- Would a late-third NA-RFM edit with a background-masked hook reach 3 px without scene change? Earlier SD rounds found
+  masking helps selectivity but not strength.
+- Would the random-direction result hold on the late schedule, where the scene is kept?
+
+### Recommended next experiment
+
+**Late-third TFG with exploitation controlled:**
+- train 3 predictors on disjoint CamEdit train scenes;
+- guide with their mean;
+- evaluate with a fourth held-out predictor, plus the same disk-fit and DoG measures;
+- strengths m ∈ {2, 4, 8}, on the same 10 dev cases.
+
+**Why:** the late schedule is the only one that keeps the scene, and TFG reached the target on its own predictor
+there. So the open question is whether it fails because of predictor exploitation or because late steps cannot create
+blur. One run separates the two. If it still delivers ≤ 1.5 px, steering is not worth further effort for this task,
+and the project should focus on improving BokehDiff (dead zone, transparency).
+
+Every deviation from the Design is listed below with the moment it was decided.
 
 ### Deviations from the frozen design
 

@@ -1,0 +1,13 @@
+{
+ "narfm": {
+  "go": false,
+  "max_response": 8,
+  "max_both": 5,
+  "n_cases": 10,
+  "need": 7
+ },
+ "tfg": {
+  "go": false,
+  "why": "no repeatable response"
+ }
+}

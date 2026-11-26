@@ -1,0 +1,800 @@
+{
+ "model": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+ "steps": 50,
+ "cfg": 7.5,
+ "size": 512,
+ "scheduler": "DDIM (checkpoint config), eta 0",
+ "target_px": 3.0,
+ "tol_px": 1.33,
+ "schedules": {
+  "early": [
+   0,
+   16
+  ],
+  "middle": [
+   17,
+   33
+  ],
+  "late": [
+   34,
+   49
+  ],
+  "all": [
+   0,
+   49
+  ]
+ },
+ "layers": {
+  "mid": "mid_block",
+  "attn": "up_blocks.1.attentions.1",
+  "late": "up_blocks.2.resnets.2"
+ },
+ "prompts": {
+  "dev": [
+   [
+    "d01",
+    "a golden retriever sitting on a wooden porch, a garden with dense flowers behind it, highly detailed background",
+    "dog",
+    101
+   ],
+   [
+    "d02",
+    "a red vintage bicycle leaning against a brick wall covered in ivy, a city street behind it, highly detailed background",
+    "bicycle",
+    102
+   ],
+   [
+    "d03",
+    "a portrait photo of an elderly man wearing a wool hat, a busy outdoor market behind him, highly detailed background",
+    "man",
+    103
+   ],
+   [
+    "d04",
+    "a ceramic coffee mug on a cafe table, bookshelves full of books behind it, highly detailed background",
+    "mug",
+    104
+   ],
+   [
+    "d05",
+    "a tabby cat sitting on a stone wall, a forest of tall trees behind it, highly detailed background",
+    "cat",
+    105
+   ],
+   [
+    "d06",
+    "a young woman holding a bouquet of sunflowers, a field of tall grass behind her, highly detailed background",
+    "woman",
+    106
+   ],
+   [
+    "d07",
+    "a red fire hydrant on a sidewalk, parked cars and shop windows behind it, highly detailed background",
+    "fire hydrant",
+    107
+   ],
+   [
+    "d08",
+    "a white horse standing in a meadow, a wooden fence and pine trees behind it, highly detailed background",
+    "horse",
+    108
+   ],
+   [
+    "d09",
+    "a potted cactus on a windowsill, a city skyline with many buildings behind it, highly detailed background",
+    "cactus",
+    109
+   ],
+   [
+    "d10",
+    "a vintage motorcycle parked on a cobblestone street, old houses behind it, highly detailed background",
+    "motorcycle",
+    110
+   ],
+   [
+    "d11",
+    "a little girl in a yellow raincoat, a playground with colourful equipment behind her, highly detailed background",
+    "girl",
+    111
+   ],
+   [
+    "d12",
+    "a pineapple on a picnic table, a lake shore with boats and trees behind it, highly detailed background",
+    "pineapple",
+    112
+   ]
+  ],
+  "confirm": [
+   [
+    "c01",
+    "a black labrador lying on a doormat, a front yard with hedges and flowers behind it, highly detailed background",
+    "dog",
+    201
+   ],
+   [
+    "c02",
+    "a man in a denim jacket standing on a bridge, a river and buildings behind him, highly detailed background",
+    "man",
+    202
+   ],
+   [
+    "c03",
+    "a red toy fire truck on a wooden floor, a living room with shelves behind it, highly detailed background",
+    "toy truck",
+    203
+   ],
+   [
+    "c04",
+    "a brown owl perched on a branch, a dense forest behind it, highly detailed background",
+    "owl",
+    204
+   ],
+   [
+    "c05",
+    "a stack of pancakes on a plate, a busy diner counter behind it, highly detailed background",
+    "pancakes",
+    205
+   ],
+   [
+    "c06",
+    "a woman with curly hair sitting on a park bench, trees and a path behind her, highly detailed background",
+    "woman",
+    206
+   ],
+   [
+    "c07",
+    "a yellow taxi on a street corner, crowded storefronts and signs behind it, highly detailed background",
+    "taxi",
+    207
+   ],
+   [
+    "c08",
+    "a sheep standing on a hillside, stone walls and farmland behind it, highly detailed background",
+    "sheep",
+    208
+   ],
+   [
+    "c09",
+    "a white teapot on a kitchen counter, a tiled wall and hanging utensils behind it, highly detailed background",
+    "teapot",
+    209
+   ],
+   [
+    "c10",
+    "a boy holding a football, a stadium with crowded seats behind him, highly detailed background",
+    "boy",
+    210
+   ],
+   [
+    "c11",
+    "a bronze lion statue in a plaza, fountains and buildings behind it, highly detailed background",
+    "statue",
+    211
+   ],
+   [
+    "c12",
+    "a sunflower in close view, a farmhouse and fields behind it, highly detailed background",
+    "sunflower",
+    212
+   ]
+  ]
+ },
+ "camedit": {
+  "shard": "CamEdit_Focal_001",
+  "split_rule": "sha1(id) mod 20: 0-13 train, 14-16 val, 17-19 test",
+  "ids": {
+   "train": [
+    "0040230",
+    "0018681",
+    "0037741",
+    "0019002",
+    "0033451",
+    "0059594",
+    "0005320",
+    "0037170",
+    "0013824",
+    "0012467",
+    "0084384",
+    "0023400",
+    "0062283",
+    "0073104",
+    "0053425",
+    "0022997",
+    "0062850",
+    "0076215",
+    "0077911",
+    "0065668",
+    "0066811",
+    "0029427",
+    "0069292",
+    "0055669",
+    "0066070",
+    "0007034",
+    "0030338",
+    "0005313",
+    "0008969",
+    "0043931",
+    "0073220",
+    "0084311",
+    "0047110",
+    "0066828",
+    "0026393",
+    "0010285",
+    "0024055",
+    "0057573",
+    "0060913",
+    "0023586",
+    "0033362",
+    "0064179",
+    "0076498",
+    "0016316",
+    "0041264",
+    "0015970",
+    "0041466",
+    "0040652",
+    "0036304",
+    "0033943",
+    "0074873",
+    "0027078",
+    "0028388",
+    "0024363",
+    "0031691",
+    "0038095",
+    "0007400",
+    "0068236",
+    "0049079",
+    "0045276",
+    "0001708",
+    "0042621",
+    "0083507",
+    "0079724",
+    "0034969",
+    "0030753",
+    "0022541",
+    "0046304",
+    "0053027",
+    "0027327",
+    "0041406",
+    "0082510",
+    "0007937",
+    "0083715",
+    "0022719",
+    "0036625",
+    "0000480",
+    "0078125",
+    "0048306",
+    "0078604",
+    "0084940",
+    "0052101",
+    "0041640",
+    "0033542",
+    "0054100",
+    "0043590",
+    "0041298",
+    "0064608",
+    "0078335",
+    "0078424",
+    "0019252",
+    "0069104",
+    "0076755",
+    "0065692",
+    "0053714",
+    "0080630",
+    "0005860",
+    "0012560",
+    "0023665",
+    "0018578",
+    "0021169",
+    "0076506",
+    "0039814",
+    "0076300",
+    "0014595",
+    "0059774",
+    "0026819",
+    "0075762",
+    "0063957",
+    "0049439",
+    "0080352",
+    "0025296",
+    "0084180",
+    "0083515",
+    "0022837",
+    "0012618",
+    "0039577",
+    "0031564",
+    "0079922",
+    "0032126",
+    "0021046",
+    "0002104",
+    "0054740",
+    "0043295",
+    "0005824",
+    "0025019",
+    "0006967",
+    "0065094",
+    "0024138",
+    "0003773",
+    "0043482",
+    "0054745",
+    "0018767",
+    "0043548",
+    "0033807",
+    "0022203",
+    "0072218",
+    "0034841",
+    "0057401",
+    "0084700",
+    "0045030",
+    "0084090",
+    "0009907",
+    "0043248",
+    "0013294",
+    "0035621",
+    "0080339",
+    "0034008",
+    "0072095",
+    "0071250",
+    "0048784",
+    "0069117",
+    "0048293",
+    "0041978",
+    "0084771",
+    "0053438",
+    "0019367",
+    "0014148",
+    "0009392",
+    "0046802",
+    "0024206",
+    "0048028",
+    "0075067",
+    "0078398",
+    "0057104",
+    "0066035",
+    "0010696",
+    "0008579",
+    "0047492",
+    "0057350",
+    "0037975",
+    "0034573",
+    "0050437",
+    "0041509",
+    "0058836",
+    "0015689",
+    "0021779",
+    "0005993",
+    "0034916",
+    "0079055",
+    "0080568",
+    "0012188",
+    "0079128",
+    "0024859",
+    "0052802",
+    "0014411",
+    "0013262",
+    "0059595",
+    "0010391",
+    "0001364",
+    "0019230",
+    "0040537",
+    "0083814",
+    "0060312",
+    "0053305",
+    "0009633",
+    "0055593",
+    "0024882",
+    "0021531",
+    "0016704",
+    "0077075",
+    "0061026",
+    "0032849",
+    "0015361",
+    "0052776",
+    "0082150",
+    "0073574",
+    "0002243",
+    "0077184",
+    "0043267",
+    "0015412",
+    "0079661",
+    "0010883",
+    "0076313",
+    "0061516",
+    "0043603",
+    "0018662",
+    "0060015",
+    "0070469",
+    "0017984",
+    "0031967"
+   ],
+   "val": [
+    "0076853",
+    "0043536",
+    "0061109",
+    "0048063",
+    "0052904",
+    "0084926",
+    "0080002",
+    "0005341",
+    "0084603",
+    "0061997",
+    "0073154",
+    "0079679",
+    "0047440",
+    "0021200",
+    "0064926",
+    "0016158",
+    "0016416",
+    "0082717",
+    "0049213",
+    "0078298",
+    "0046797",
+    "0011652",
+    "0041511",
+    "0078736",
+    "0013934",
+    "0043316",
+    "0026784",
+    "0002323",
+    "0033712",
+    "0028434",
+    "0026558",
+    "0045717",
+    "0012750",
+    "0021338",
+    "0035079",
+    "0002122",
+    "0011179",
+    "0080247",
+    "0014055",
+    "0007741",
+    "0044503",
+    "0008300",
+    "0001796",
+    "0034799",
+    "0053035",
+    "0083326",
+    "0018842",
+    "0005821",
+    "0014326"
+   ],
+   "test": [
+    "0064845",
+    "0081302",
+    "0008511",
+    "0058457",
+    "0054917",
+    "0017272",
+    "0031723",
+    "0005827",
+    "0074473",
+    "0011249",
+    "0046285",
+    "0001449",
+    "0031577",
+    "0009307",
+    "0015262",
+    "0034718",
+    "0035606",
+    "0032105",
+    "0021740",
+    "0054919",
+    "0057567",
+    "0048422",
+    "0053117",
+    "0035424",
+    "0019155",
+    "0021916",
+    "0071444",
+    "0080747",
+    "0026908",
+    "0059519",
+    "0029822",
+    "0050039",
+    "0078331",
+    "0011745",
+    "0071306",
+    "0083948",
+    "0053635",
+    "0010866",
+    "0014790",
+    "0049919",
+    "0005377",
+    "0032375",
+    "0001888",
+    "0052874",
+    "0032484",
+    "0034369",
+    "0022498",
+    "0032507",
+    "0043108",
+    "0053059",
+    "0008320"
+   ]
+  }
+ },
+ "checkpoints": {
+  "directions": "bba659aeff5531c9",
+  "na_filters": "caee0a25bf3e798a",
+  "P": "37b58a7158463d9a"
+ },
+ "selection_sha256": "30d08f7ba05e55d124af87474cc97cd624cebe5a75e97d3ba86b52384ca16071",
+ "smoke": {
+  "dtypes": {
+   "unet": "torch.float16",
+   "vae": "torch.float32"
+  },
+  "narfm_w0_mid_d01": {
+   "max": 16.0,
+   "mean": 0.2602653503417969
+  },
+  "narfm_w0_mid_d03": {
+   "max": 55.0,
+   "mean": 0.8448499043782552
+  },
+  "narfm_hook_mid": {
+   "applied": 17,
+   "calls": 67
+  },
+  "narfm_w0_attn_d01": {
+   "max": 16.0,
+   "mean": 0.2602653503417969
+  },
+  "narfm_w0_attn_d03": {
+   "max": 55.0,
+   "mean": 0.8448499043782552
+  },
+  "narfm_hook_attn": {
+   "applied": 17,
+   "calls": 67
+  },
+  "narfm_w0_late_d01": {
+   "max": 16.0,
+   "mean": 0.2602653503417969
+  },
+  "narfm_w0_late_d03": {
+   "max": 55.0,
+   "mean": 0.8448499043782552
+  },
+  "narfm_hook_late": {
+   "applied": 17,
+   "calls": 67
+  },
+  "narfm_na_ratio": 0.4778454154729843,
+  "narfm_gamma0": 1.0,
+  "narfm_m2_mid": [
+   {
+    "case": "d01",
+    "dog_bg": 0.5615077930525607,
+    "r": NaN,
+    "std": 71.05770764536861
+   },
+   {
+    "case": "d03",
+    "dog_bg": 0.5117195975965857,
+    "r": NaN,
+    "std": 64.80294576460099
+   }
+  ],
+  "narfm_m2_attn": [
+   {
+    "case": "d01",
+    "dog_bg": 0.17353790607369945,
+    "r": NaN,
+    "std": 69.81132884609691
+   },
+   {
+    "case": "d03",
+    "dog_bg": 0.19016924124123036,
+    "r": NaN,
+    "std": 51.56207343044015
+   }
+  ],
+  "narfm_m2_late": [
+   {
+    "case": "d01",
+    "dog_bg": 0.12025122454694298,
+    "r": NaN,
+    "std": 68.2463541320988
+   },
+   {
+    "case": "d03",
+    "dog_bg": 0.5624207930572949,
+    "r": NaN,
+    "std": 75.63005031876655
+   }
+  ],
+  "narfm_grids": {
+   "mid": [
+    0.5,
+    1.0,
+    2.0
+   ],
+   "attn": [
+    0.5,
+    1.0,
+    2.0
+   ],
+   "late": [
+    0.5,
+    1.0,
+    2.0
+   ]
+  },
+  "narfm_s_per_image": 6.885199069976807,
+  "tfg_grad_norm": 0.24120184779167175,
+  "tfg_zero_d01": {
+   "max": 21.0,
+   "mean": 0.3092689514160156
+  },
+  "tfg_zero_d03": {
+   "max": 59.0,
+   "mean": 0.7808113098144531
+  },
+  "smoke_json_partial": true,
+  "tfg_m0_tries": [
+   {
+    "m0": 1.0,
+    "readings": [
+     [
+      "d01",
+      2.974752187728882,
+      0.0424397811293602,
+      107.54927325248718,
+      100,
+      150
+     ],
+     [
+      "d03",
+      2.9763166904449463,
+      4.402000904083252,
+      107.559739112854,
+      100,
+      150
+     ]
+    ],
+    "ok": false
+   },
+   {
+    "m0": 4.0,
+    "readings": [
+     [
+      "d01",
+      2.9892163276672363,
+      0.0424397811293602,
+      107.55528616905212,
+      100,
+      150
+     ],
+     [
+      "d03",
+      2.990473747253418,
+      4.402000904083252,
+      107.5765631198883,
+      100,
+      150
+     ]
+    ],
+    "ok": false
+   },
+   {
+    "m0": 16.0,
+    "readings": [
+     [
+      "d01",
+      2.972477674484253,
+      0.0424397811293602,
+      107.54306221008301,
+      100,
+      150
+     ],
+     [
+      "d03",
+      3.013216495513916,
+      4.402000904083252,
+      107.52055072784424,
+      100,
+      150
+     ]
+    ],
+    "ok": false
+   }
+  ],
+  "tfg_m0": 1.0,
+  "tfg_weak": false,
+  "tfg_s_per_steered_step": 2.151045594215393,
+  "memory": {
+   "peak_gb": 10.308137893676758,
+   "total_gb": 11.75,
+   "name": "NVIDIA A30 MIG 2g.12gb"
+  },
+  "tfg_plan": {
+   "iter_steps": 2,
+   "n_cases": 12,
+   "strengths": [
+    0.5,
+    1.0,
+    2.0
+   ],
+   "projected_h": 4.656150199638473
+  },
+  "reductions": [],
+  "checks": {
+   "baseline_repro_d01": true,
+   "baseline_repro_d03": true,
+   "narfm_zero_strength_exact_mid_d01": true,
+   "narfm_w0_tol_mid_d01": true,
+   "narfm_zero_strength_exact_mid_d03": true,
+   "narfm_w0_tol_mid_d03": true,
+   "narfm_hook_steps_mid": true,
+   "narfm_zero_strength_exact_attn_d01": true,
+   "narfm_w0_tol_attn_d01": true,
+   "narfm_zero_strength_exact_attn_d03": true,
+   "narfm_w0_tol_attn_d03": true,
+   "narfm_hook_steps_attn": true,
+   "narfm_zero_strength_exact_late_d01": true,
+   "narfm_w0_tol_late_d01": true,
+   "narfm_zero_strength_exact_late_d03": true,
+   "narfm_w0_tol_late_d03": true,
+   "narfm_hook_steps_late": true,
+   "tfg_grad_finite_nonzero": true,
+   "tfg_zero_tol_d01": true,
+   "tfg_zero_tol_d03": true,
+   "tfg_steps_m0_1_d01": true,
+   "tfg_steps_m0_1_d03": true,
+   "tfg_steps_m0_4_d01": true,
+   "tfg_steps_m0_4_d03": true,
+   "tfg_steps_m0_16_d01": true,
+   "tfg_steps_m0_16_d03": true,
+   "weights_unchanged": true,
+   "memory_fits": true
+  },
+  "elapsed_h": 0.7880894227822621,
+  "revision": {
+   "floor": {
+    "d01": {
+     "max": 40.0,
+     "mean": 0.41011937459309894
+    },
+    "d03": {
+     "max": 42.0,
+     "mean": 0.7009328206380209
+    }
+   },
+   "original_checks": {
+    "narfm_w0_tol_mid_d01": false,
+    "narfm_w0_tol_mid_d03": false,
+    "narfm_w0_tol_attn_d01": false,
+    "narfm_w0_tol_attn_d03": false,
+    "narfm_w0_tol_late_d01": false,
+    "narfm_w0_tol_late_d03": false,
+    "tfg_zero_tol_d01": false,
+    "tfg_zero_tol_d03": false
+   },
+   "original_tfg_m0": 16.0,
+   "original_tfg_weak": true,
+   "tfg_m0_probe": [
+    {
+     "m0": 1.0,
+     "ok": true
+    },
+    {
+     "m0": 4.0,
+     "ok": true
+    },
+    {
+     "m0": 16.0,
+     "ok": true
+    }
+   ]
+  }
+ },
+ "rules": {
+  "dino_subj": 0.85,
+  "iou": 0.75,
+  "shift": 36.72292780535337,
+  "subj_sharp": -0.35,
+  "de": 4.0,
+  "scene": 0.15
+ },
+ "rule45": "aa6a1ae86a829a1a"
+}
