@@ -40,7 +40,7 @@ stamp "stages 0-4"
 run s0_env s1_data s1_refs s1_validate || { stamp "TERMINAL: data, references or measurement validation failed"; run s7_report; exit 1; }
 run s2_narfm || stamp "NA-RFM component stage crashed (TFG continues; smoke will mark NA-RFM invalid)"
 run s2_tfg || stamp "TFG component stage crashed (NA-RFM continues; smoke will mark TFG invalid)"
-run s3_smoke || { stamp "TERMINAL: smoke stage crashed"; run s7_report; exit 1; }
+run s3_smoke s3b_floor || { stamp "TERMINAL: smoke stage crashed"; run s7_report; exit 1; }
 run s4a_layers s4b_sweep s4c_select bprep_dev || { stamp "TERMINAL: sweep or selection failed"; run s7_report; exit 1; }
 bokeh dev || stamp "BokehDiff dev failed (comparison will be reported missing)"
 run bscore_dev || stamp "BokehDiff dev scoring failed"

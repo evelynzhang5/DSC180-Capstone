@@ -267,11 +267,11 @@ def judge(res, rules=None):
 # ---------------------------------------------------------------- validation transforms (Stage 1)
 def transforms(ref, R):
     s = R["subject"]
-    out = {f"bgblur_r{r:g}": (posthoc(ref, s, r), dict(kind="bgblur", r=r)) for r in (1, 2, 3, 4, 6)}
+    out = {f"bgblur_r{r:g}": (posthoc(ref, s, r), dict(kind="bgblur", applied=r)) for r in (1, 2, 3, 4, 6)}
     al = feather(s)
     mean = ref[R["background"]].mean(0) if R["background"].any() else ref.reshape(-1, 3).mean(0)
     out["contrast0.6"] = (al * ref + (1 - al) * (mean + 0.6 * (ref - mean)), dict(kind="contrast"))
     for d in (8, 16):
         out[f"shift{d}"] = (np.roll(ref, (d, d), axis=(0, 1)), dict(kind="shift", d=d))
-    out["global_r2"] = (disk_blur(ref, 2.0), dict(kind="global", r=2.0))
+    out["global_r2"] = (disk_blur(ref, 2.0), dict(kind="global", applied=2.0))
     return out

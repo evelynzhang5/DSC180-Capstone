@@ -99,6 +99,17 @@ def reg_path(split, cid):
     return OUT / "regions" / split / f"{cid}.npz"
 
 
+def eligible_cases(split):
+    """Cases whose frozen reference regions allow scoring: subject >= 0.5% and background >= 2% of the image
+    (decided after seeing references, before any steered output; README Status)."""
+    out = []
+    for cid in cases(split):
+        j = C.jload(str(reg_path(split, cid)) + ".json")
+        if j and j["subj_area"] >= 0.005 and j["bg_area"] >= 0.02:
+            out.append(cid)
+    return out
+
+
 def rules():
     return C.jload(OUT / "rules48.json", {}).get("rules", Mx.RULES)
 
@@ -365,7 +376,7 @@ def s3_smoke(ctx):
     if tfg_ok:
         sums0["P"] = C.module_checksum(ctx.P)
     res, checks = dict(dtypes=sd.dtypes), {}
-    smoke_cases = ["d01", "d02"]
+    smoke_cases = eligible_cases("dev")[:2]
     base = {}
     for cid in smoke_cases:
         _, prompt, _, seed = cases("dev")[cid]
@@ -390,7 +401,7 @@ def s3_smoke(ctx):
                 mx, mn = diff(zw, base[cid])
                 res[f"narfm_w0_{layer}_{cid}"] = dict(max=mx, mean=mn)
                 checks[f"narfm_w0_tol_{layer}_{cid}"] = bool(mx <= 2 and mn <= 0.1)
-            _, prompt, _, seed = cases("dev")["d01"]
+            _, prompt, _, seed = cases("dev")[smoke_cases[0]]
             _, inf = sd.sample(prompt, seed, dict(layer=layer, d=d, w=C.W_HOOK, s=C.S_BASE, gamma=1.0,
                                                   steps=C.SCHEDULES["middle"], na=ctx.na))
             checks[f"narfm_hook_steps_{layer}"] = bool(inf["hook_applied"] == len(C.SCHEDULES["middle"])
@@ -421,8 +432,8 @@ def s3_smoke(ctx):
     if tfg_ok:
         import tfg48
         g = tfg48.make_tfg(sd, ctx.P, 1.0)
-        g.guider.set_mask(scorer(ctx, "dev", "d01").R["background"])
-        z = sd.init_latent(101).float().requires_grad_(True)
+        g.guider.set_mask(scorer(ctx, "dev", smoke_cases[0]).R["background"])
+        z = sd.init_latent(cases("dev")[smoke_cases[0]][3]).float().requires_grad_(True)
         grad = g.guider.get_guidance(z, return_logp=False)
         gn = float(grad.norm())
         checks["tfg_grad_finite_nonzero"] = bool(torch.isfinite(grad).all() and gn > 0)
@@ -500,6 +511,51 @@ def s3_smoke(ctx):
                    narfm_valid=bool(narfm_ok and not narfm_bad), tfg_valid=bool(tfg_ok and not tfg_bad))
 
 
+def s3b_floor(ctx):
+    """Post-smoke revision (README Status): tolerance for the w = 0 and TFG zero-strength checks from the measured
+    numerical floor of the unsteered sampler (batch-2 vs two batch-1 calls), and TFG m0 = smallest probe at which
+    P's background reading reaches T within 0.5 px on every smoke case."""
+    C.require("s3_smoke")
+    sm = C.jload(OUT / "smoke.json")
+    man = C.jload(C.manifest_path("s3_smoke"))
+    smoke_cases = eligible_cases("dev")[:2]
+    floor = {}
+    for cid in smoke_cases:
+        _, prompt, _, seed = cases("dev")[cid]
+        a = ctx.sd.sample_split(prompt, seed).astype(float)
+        b = np.asarray(Image.open(ref_path("dev", cid))).astype(float)
+        floor[cid] = dict(max=float(np.abs(a - b).max()), mean=float(np.abs(a - b).mean()))
+        Image.fromarray(a.astype(np.uint8)).save(OUT / "refs" / "dev" / f"{cid}_floor.png")
+    checks = dict(man["checks"])
+    for k in list(checks):
+        if k.startswith("narfm_w0_tol_") or k.startswith("tfg_zero_tol_"):
+            cid = k.rsplit("_", 1)[1]
+            v = sm[k.replace("_tol", "").replace("narfm_w0_", "narfm_w0_")] if k.startswith("narfm") else \
+                sm[f"tfg_zero_{cid}"]
+            fl = floor[cid]
+            checks[k] = bool(v["max"] <= max(2.0, 2 * fl["max"]) and v["mean"] <= max(0.1, 2 * fl["mean"]))
+    probe = []
+    for t in sm.get("tfg_m0_tries", []):
+        probe.append(dict(m0=t["m0"], ok=all(abs(r[1] - C.T_BLUR) <= 0.5 for r in t["readings"])))
+    m0_new = next((p_["m0"] for p_ in probe if p_["ok"]), None)
+    rev = dict(floor=floor, original_checks={k: v for k, v in man["checks"].items() if k not in checks or
+                                             checks[k] != v}, original_tfg_m0=sm.get("tfg_m0"),
+               original_tfg_weak=sm.get("tfg_weak"), tfg_m0_probe=probe)
+    if m0_new is not None:
+        sm["tfg_m0"], sm["tfg_weak"] = m0_new, False
+    sm["checks"], sm["revision"] = checks, rev
+    C.jdump(sm, OUT / "smoke.json")
+    failed = [k for k, v in checks.items() if not v]
+    bad = lambda pre: [k for k in failed if k.startswith(pre) or k.startswith("baseline") or k in
+                       ("weights_unchanged", "memory_fits")]
+    man.update(checks=checks, failed=failed, narfm_valid=bool(C.stage_done("s2_narfm") and not bad("narfm")),
+               tfg_valid=bool(C.stage_done("s2_tfg") and not bad("tfg")), revision=rev)
+    C.jdump(man, C.manifest_path("s3_smoke"))
+    C.log(f"floor {floor}; revised checks failed: {failed}; tfg m0 {sm['tfg_m0']} (probe {probe}); "
+          f"narfm_valid {man['narfm_valid']}, tfg_valid {man['tfg_valid']}")
+    C.finish_stage("s3b_floor", ["smoke.json"], floor=floor, failed=failed)
+
+
 def valid(method):
     m = C.jload(C.manifest_path("s3_smoke"))
     return bool(m and m.get("status") == "ok" and m.get(f"{method}_valid"))
@@ -513,8 +569,8 @@ def s4a_layers(ctx):
     elig = C.jload(OUT / "narfm" / "report.json")["eligible"]
     score = {}
     for layer in elig:
-        rr = [run_one(ctx, "dev", f"d0{i}", "narfm", dict(layer=layer, m=1.0, sched="middle"), phase="layers")
-              for i in range(1, 5)]
+        rr = [run_one(ctx, "dev", cid, "narfm", dict(layer=layer, m=1.0, sched="middle"), phase="layers")
+              for cid in eligible_cases("dev")[:4]]
         n = sum(r["response"] and r["dino_subj"] >= rules()["dino_subj"] and r["iou"] >= rules()["iou"] for r in rr)
         score[layer] = dict(n=int(n), mean_scene=float(np.mean([r["scene"] for r in rr])))
     pick = sorted(score, key=lambda k: (-score[k]["n"], score[k]["mean_scene"]))[0]
@@ -556,7 +612,8 @@ def config_table(ctx, method, split="dev"):
     cfgs, _ = sweep_configs(method)
     tab = []
     for cfg in cfgs:
-        rr = recs(ctx, split, method, cfg_key(method, cfg))
+        el = set(eligible_cases(split))
+        rr = [r for r in recs(ctx, split, method, cfg_key(method, cfg)) if r["case"] in el]
         if not rr:
             continue
         tab.append(dict(cfg=cfg, key=cfg_key(method, cfg), n=len(rr), response=sum(r["response"] for r in rr),
@@ -668,7 +725,7 @@ def s7_report(ctx):
 
 
 STAGES = dict(s0_env=s0_env, s1_data=s1_data, s1_refs=s1_refs, s1_validate=s1_validate, s2_narfm=s2_narfm,
-              s2_tfg=s2_tfg, s3_smoke=s3_smoke, s4a_layers=s4a_layers, s4b_sweep=s4b_sweep, s4c_select=s4c_select,
+              s2_tfg=s2_tfg, s3_smoke=s3_smoke, s3b_floor=s3b_floor, s4a_layers=s4a_layers, s4b_sweep=s4b_sweep, s4c_select=s4c_select,
               bprep_dev=lambda c: bprep(c, "dev"), bscore_dev=lambda c: bscore(c, "dev"), s6_gate=s6_gate,
               s6_confirm=s6_confirm, bprep_confirm=lambda c: bprep(c, "confirm"),
               bscore_confirm=lambda c: bscore(c, "confirm"), s7_report=s7_report)

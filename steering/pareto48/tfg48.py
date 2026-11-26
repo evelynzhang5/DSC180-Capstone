@@ -74,8 +74,9 @@ def disk_kernel(r, device):
 
 
 def disk_t(lin, r):
-    """lin: (B, 3, H, W); uniform disk blur, reflect padding."""
-    if r <= 1e-6:
+    """lin: (B, 3, H, W); uniform disk blur, reflect padding. Radii < 0.25 px = no blur (the anti-aliased disk of a
+    sub-sample radius is empty, and normalising it gave NaN)."""
+    if r < 0.25:
         return lin
     k = disk_kernel(r, lin.device)
     p = k.shape[0] // 2
@@ -317,7 +318,7 @@ class BlurGuider:
 
 def make_tfg(sd, P, m, iter_steps=2):
     TFGGuidance = load_tfg_class()
-    args = types.SimpleNamespace(device=sd.dev, seed=0, rho=0.25 * m, mu=2.0 * m, sigma=0.1, eps_bsz=1,
+    args = types.SimpleNamespace(device=torch.device(sd.dev), seed=0, rho=0.25 * m, mu=2.0 * m, sigma=0.1, eps_bsz=1,
                                  recur_steps=1, iter_steps=iter_steps, rho_schedule="increase",
                                  mu_schedule="increase", sigma_schedule="decrease", clip_x0=False,
                                  clip_sample_range=1.0, clip_scale=100.0)

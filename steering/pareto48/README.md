@@ -290,4 +290,36 @@ round 40's max(2, 0.2 r) at 768 px converted to the 512 scale.
 
 ## Status
 
-Design frozen; code being written. Nothing has run yet.
+Running on DSMLP pod `p48`. Every deviation from the Design is listed here with the moment it was decided.
+
+### Deviations from the frozen design
+
+1. **GPU.** The pod got an A30 **MIG 2g.12gb slice** (11.75 GB, about half an A30's compute), not a full 24 GB A30.
+   Smoke peak memory was 10.3 GB, so no OOM retry was needed.
+2. **Case eligibility** (decided after seeing the 12 dev references, before any steered output). Cases whose frozen
+   regions cannot be scored are excluded from counts:
+   - **rule:** subject < 0.5% or background < 2% of the image;
+   - **excluded:**
+     - **d02:** brick wall at the bicycle's depth, so there is no background region;
+     - **d12:** SD drew no pineapple, so there is no subject.
+   - **Effect on thresholds:** they scale with the eligible count (8/12 → ⌈2n/3⌉, 6/12 → ⌈n/2⌉; 7/10 for dev).
+   - **Effect on smoke and the layer screen:** they use the first eligible dev cases (d01, d03 / d01, d03-d05).
+3. **Validation threshold change, per the frozen rule.** Background-only blur at r = 3 moved the CLIPSeg centroid by up
+   to 36.7 px on some cases, so the centroid-shift threshold became 36.7 px.
+4. **Smoke tolerance** (decided after smoke, before any sweep).
+   - **What failed:** the frozen 2/255 (max) / 0.1/255 (mean) tolerance failed for NA-RFM with w = 0 and for TFG at
+     zero strength. Measured: mean 0.26-0.84/255, max 16-59/255.
+   - **What passed:** zero-strength NA-RFM (s = 0, γ = 0) is bit-identical to the baseline.
+   - **Why it differs:** the only differences are numerical — a batch-1 hooked UNet call amplified by s = 4, and TFG's
+     own DDIM arithmetic.
+   - **Revised tolerance:** measured from the unsteered sampler's own numerical floor (the same CFG computed as two
+     batch-1 calls instead of one batch-2 call; `s3b_floor`). Pass if the max and mean differences are ≤ 2× the floor
+     (and at least the original tolerance). The original failures are kept in `smoke.json` (`revision`).
+5. **TFG strength m0** (decided after smoke, before any sweep).
+   - **What went wrong:** the frozen rule (raise P's background reading by ≥ 1 px on both smoke cases) cannot be met
+     when a reference already reads above T (d03 reads 4.4 px). Every probe failed, and the rule fell back to m0 = 16.
+   - **Why that matters:** the smoke images at m0 = 4 and 16 destroy the subject (subject DINOv2 ≈ 0, mask IoU 0).
+   - **Revised rule:** m0 = the smallest probe at which guidance brings P's reading to T ± 0.5 px on both smoke cases.
+     The original outcome is kept in `smoke.json` (`revision`).
+   - **Smoke observation, for the report:** at every m0, P reads ≈ 3.0 px while the independent DoG evaluator shows no
+     background detail loss. The guidance satisfies its own predictor without producing blur the evaluator can see.

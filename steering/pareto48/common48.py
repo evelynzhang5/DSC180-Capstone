@@ -158,8 +158,12 @@ class SD:
         self.vae32 = pipe.vae.to(torch.float32)                 # one VAE, kept in fp32 (decode + TFG guidance)
         self.vae32.requires_grad_(False)
         self.sf = pipe.vae.config.scaling_factor
-        if memsave:
-            pipe.enable_attention_slicing()
+        if memsave:                          # predefined OOM retry: slicing + gradient checkpointing (no dropout in
+            pipe.enable_attention_slicing()  # SD 1.5's UNet/VAE, so train() only switches checkpointing on)
+            self.unet.enable_gradient_checkpointing()
+            self.unet.train()
+            self.vae32.enable_gradient_checkpointing()
+            self.vae32.decoder.train()
         self.memsave = memsave
         self.ts = list(self.sched.timesteps)
         ac = self.sched.alphas_cumprod.double()
@@ -197,9 +201,6 @@ class SD:
 
     def decode32(self, z, grad=False):
         x = z.float() / self.sf
-        if grad and self.memsave:
-            from torch.utils.checkpoint import checkpoint
-            return checkpoint(lambda a: self.vae32.decode(a).sample, x, use_reentrant=False)
         return self.vae32.decode(x).sample
 
     @torch.no_grad()
@@ -249,6 +250,22 @@ class SD:
         if h is not None:
             info["hook_calls"], info["hook_applied"] = h.calls, h.applied
         return self.to_uint8(z), info
+
+    @torch.no_grad()
+    def sample_split(self, prompt, seed):
+        """Numerical-floor variant of plain CFG: identical maths, but uncond and cond are two batch-1 UNet calls
+        instead of one batch-2 call. No steering code is involved."""
+        uncond, cond = self.embed([""]), self.embed([prompt])
+        z = self.init_latent(seed)
+        for k, t in enumerate(self.ts):
+            eu, ec = self.eps(z, t, uncond).float(), self.eps(z, t, cond).float()
+            e = eu + CFG * (ec - eu)
+            a = self.alpha_at(k)
+            zf = z.float()
+            x0 = (zf - (1 - a) ** 0.5 * e) / a ** 0.5
+            e = (zf - a ** 0.5 * x0) / (1 - a) ** 0.5
+            z = self.sched.step(e, t, zf).prev_sample.to(self.dt)
+        return self.to_uint8(z)
 
     # -------------------------------------------------- TFG (upstream TFGGuidance.guide_step)
     def sample_tfg(self, prompt, seed, guidance, steps):
