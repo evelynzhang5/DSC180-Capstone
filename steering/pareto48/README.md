@@ -360,6 +360,80 @@ Requested before any further steering sweep. Dev cases only; **the 12 confirmati
   - **Not E2** → P is inaccurate on SD images, an offline accuracy problem. Reported; no ensemble experiment.
   - **Not E4** → a guidance bug. Fix before any interpretation.
 
+## Audit of round 48: results (Nov 26, 2026)
+
+Full tables: `results/audit/report.md` (machine-readable: `audit.json`, `numerics.json`, `trace.json`, `p2.json`).
+Traced images (456 MB) stay on DSMLP under `outputs/pareto48/audit/`. The confirmation prompts were not generated.
+
+**Audit deviation:** run on a GTX 1080 Ti (11 GB), with `P48_MEMSAVE=1` (attention slicing + gradient checkpointing)
+from the start, because A30 pods were repeatedly scheduled onto node n57, whose course-workspace mount failed (exit
+32), and 2080 Ti pods could not be scheduled. Consequence: pairs 1 and 8 (rerun vs saved round 48 outputs) cannot be
+bit-identical across GPUs and are not, so they test cross-hardware reproduction only. Every other pair compares runs
+made inside this audit.
+
+**A. Numerics.**
+- Pairs 2, 4 and 7 are bit-identical in 10/10 cases. Zero strength is exactly a no-op once the execution path is
+  identical.
+- Pairs 3, 5 and 6 differ only at the numerical floor: mean |Δ| 0.58-0.61, p99 5-7, max 205-216 (a few unstable
+  pixels), about 36% of pixels nonzero. Every metric delta is far below decision resolution: |Δ scene| ≤ 0.0004 and
+  |Δ DoG| ≤ 0.003.
+- The difference between the separate and joint reference calls is no larger than splitting the unsteered batch.
+- Round 48's NA-RFM conclusions do not depend on batch shape. m0.5 late gives 5/10 both ways; m1 all gives 7 respond
+  / 0 preserved both ways; median scene matches to 0.003.
+- Pair 1 (cross-GPU): mean 1.21, p99 12. Pair 8: not identical (cross-GPU).
+
+**B. Shared eligible scenes** (9 cases: d01, d03-d09, d11):
+
+| arm | respond ∧ preserved | sign test vs BokehDiff | scene − BokehDiff (95%) |
+|---|---|---|---|
+| BokehDiff | 8/9 | – | – |
+| post-hoc blur | 8/9 | p = 1.00 | −0.10 [−0.13, −0.08] |
+| NA-RFM m0.5 late (best) | 5/9 | p = 0.38 | −0.03 [−0.05, −0.01] |
+| TFG m0.5 late (best) | 4/9 | p = 0.13 | −0.05 [−0.08, −0.03] |
+
+- The best steering arms change the scene less than BokehDiff but respond in fewer scenes.
+- With 9 scenes, the best arms are not significantly worse than BokehDiff. Every all-steps and early arm is (p ≤ 0.016).
+
+**C. TFG.**
+
+*Offline accuracy*, known disk blur, slope / Spearman:
+
+| images | P | P2 | disk fit |
+|---|---|---|---|
+| dev references | 0.92 / 0.96 | 0.86 / 0.96 | 1.01 / 0.98 |
+| in-trajectory x0 estimates | 0.58 / 0.95 | 0.61 / 0.95 | 1.01 / 0.98 |
+
+Both predictors rank blur correctly but under-read its size by about 40% on the intermediate estimates TFG actually
+guides on.
+
+*Intervention effectiveness*, finals, medians over 10 cases:
+
+| config | P gain | P2 gain | disk-fit r | DoG ratio | scene |
+|---|---|---|---|---|---|
+| late m1 | +2.30 px | +1.41 px | 1.14 px (7 measurable) | 1.01 | 0.08 |
+| late m2 | +2.44 px | +1.77 px | 1.76 px (5 measurable) | 1.17 | 0.13 |
+
+- **Per guided step:** P +0.10-0.14 px, P2 +0.01-0.08 px, disk-fit +0.13 px, DoG ratio ≈ 1.00.
+- **Update spectrum:** 62-78% of the update's energy lies above 0.25 cycles/px, against 73-92% for a known 1 px blur.
+
+*Classification:*
+- **E1 = True:** 7/10 (late m1) and 6/10 (late m2) cases gain ≥ 1 px on P with disk-fit gain ≤ half of it.
+- **E2 = False:** in-trajectory slope 0.58.
+- **E3 = False:** P2 reads 67% of P's gain.
+- **E4 = True:** finite-difference relative error 0.18%.
+
+**Recommendation (frozen rule): P is inaccurate on the in-trajectory images, an offline accuracy problem; no ensemble
+experiment.**
+- The E1 ∧ E4 ∧ ¬E3 branch gives the same answer. A second independently trained predictor is also partly fooled, so
+  the score gain without matching blur is not specific to P, and a predictor ensemble would not fix it.
+- **Interpretation:**
+  - the guidance is numerically correct;
+  - it moves the images in a blur-like, high-frequency direction;
+  - it does not lower background contrast (DoG ≈ 1);
+  - it gains predictor score faster than measurable blur;
+  - the predictors mis-scale blur on noisy-step estimates.
+- **Next direction (per the audit request):** BokehDiff improvements. No further steering sweep is proposed.
+
 ## Results
 
 Files: `results/` (copied from `outputs/pareto48/` on DSMLP). Generated images, activations, `P.pt`, the RFM directions
