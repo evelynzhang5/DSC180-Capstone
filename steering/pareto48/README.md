@@ -384,15 +384,26 @@ made inside this audit.
 
 **B. Shared eligible scenes** (9 cases: d01, d03-d09, d11):
 
-| arm | respond ∧ preserved | sign test vs BokehDiff | scene − BokehDiff (95%) |
-|---|---|---|---|
-| BokehDiff | 8/9 | – | – |
-| post-hoc blur | 8/9 | p = 1.00 | −0.10 [−0.13, −0.08] |
-| NA-RFM m0.5 late (best) | 5/9 | p = 0.38 | −0.03 [−0.05, −0.01] |
-| TFG m0.5 late (best) | 4/9 | p = 0.13 | −0.05 [−0.08, −0.03] |
+| arm | respond ∧ preserved | on target (\|r − 3\| ≤ 1.33) | sign test vs BokehDiff (unadjusted) | scene − BokehDiff (95%) |
+|---|---|---|---|---|
+| BokehDiff | 8/9 | 7/9 | – | – |
+| post-hoc blur (see caveat) | 8/9 | 9/9 | p = 1.00 | −0.10 [−0.13, −0.08] |
+| NA-RFM m0.5 late (best) | 5/9 | 0/9 | p = 0.38 | −0.03 [−0.05, −0.01] |
+| TFG m0.5 late (best) | 4/9 | 1/9 | p = 0.13 | −0.05 [−0.08, −0.03] |
 
-- The best steering arms change the scene less than BokehDiff but respond in fewer scenes.
-- With 9 scenes, the best arms are not significantly worse than BokehDiff. Every all-steps and early arm is (p ≤ 0.016).
+- "Responds and preserved" is not the same as reaching the 3 px target. The best steering arms respond in at most
+  5/9 scenes and reach the target in at most 1/9. Their scene change is lower largely because they blur less.
+- **Statistics:** 26 arms were each compared with BokehDiff by an exact sign test; **no multiple-comparison
+  adjustment** was applied. With 9 scenes, the smallest attainable p is 0.0078. After a Bonferroni or Holm
+  adjustment over 26 tests, no arm differs significantly from BokehDiff. The late-steering comparisons are
+  statistically inconclusive. The practical finding is that they produce less, and less accurately sized, blur.
+- **Caveat: the post-hoc baseline is circular under these metrics.** `metrics48.posthoc` disk-blurs the whole
+  reference in linear light by exactly r, and composites the subject back through a feathered copy of the
+  evaluator's own CLIPSeg subject mask. The same function, at the measured r, produces the "blur-matched reference"
+  that scene change is computed against (`Scorer.matched_ref`). Its blur is also the disk model the radius
+  measurement fits. So by construction its scene change is 0.000 and its r is 3.00 in every case, and the −0.10
+  scene advantage and 9/9 on-target are not evidence. Its one failure (d09) is a centroid shift of 39.9 px. What
+  post-hoc blur lacks can only be measured against references that are not post-hoc blur.
 
 **C. TFG.**
 
@@ -424,15 +435,25 @@ guides on.
 
 **Recommendation (frozen rule): P is inaccurate on the in-trajectory images, an offline accuracy problem; no ensemble
 experiment.**
-- The E1 ∧ E4 ∧ ¬E3 branch gives the same answer. A second independently trained predictor is also partly fooled, so
-  the score gain without matching blur is not specific to P, and a predictor ensemble would not fix it.
-- **Interpretation:**
-  - the guidance is numerically correct;
-  - it moves the images in a blur-like, high-frequency direction;
-  - it does not lower background contrast (DoG ≈ 1);
-  - it gains predictor score faster than measurable blur;
-  - the predictors mis-scale blur on noisy-step estimates.
-- **Next direction (per the audit request):** BokehDiff improvements. No further steering sweep is proposed.
+- The E1 ∧ E4 ∧ ¬E3 branch gives the same answer. The two tested predictors share the failure, so these results do
+  not justify the proposed ensemble experiment. P2 has the same architecture and training data source. Two
+  predictors failing alike does not rule out differently trained ones, for example predictors trained on noisy
+  x0 estimates.
+- **Diagnosis:**
+  - P is well calibrated on clean images (slope 0.92) but poorly calibrated on the intermediate x0 estimates it
+    guides (0.58);
+  - the gradients are correct (finite-difference error 0.18%), so TFG correctly optimizes an unreliable signal;
+  - the predictor reading rises faster than independently measured blur.
+- **Strongest evidence:** the independent disk-fit radius (1.1-1.8 px against a P gain of 2.3-2.4 px). Unchanged
+  background contrast (DoG ≈ 1) does not by itself show an absence of blur.
+- **Scope:** the tested NA-RFM and TFG configurations showed no advantage over BokehDiff. That is
+  - one model (SD 1.5),
+  - one NA-RFM layer (mid) with one training procedure,
+  - one TFG objective with one predictor architecture,
+  - 10 dev scenes.
+
+  This does not rule out other layers, training procedures or guidance objectives.
+- **Next direction:** close this pilot and return to BokehDiff improvements. No further steering sweep is proposed.
 
 ## Results
 
