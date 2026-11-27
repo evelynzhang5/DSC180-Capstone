@@ -33,9 +33,21 @@ noted where it exists.
 - **TFG** (verified upstream code; blur predictor passed its blur-vs-contrast tests): guidance drives the predictor's
   reading to 3 px while the independent measure sees 1-1.9 px and little loss of background detail.
 - **SD + BokehDiff** (round 45 controller): blurs and keeps the scene in 8/9, on target in 7/9.
-- **Verdict:** no advantage established for either steering method; the held-out confirmation was not run.
-- **Next:** late-third TFG guided by an ensemble of predictors and judged by a held-out one, to tell predictor
-  exploitation apart from late steps being unable to create blur.
+- **Verdict:** the tested NA-RFM and TFG configurations showed no advantage; the held-out confirmation was not run.
+  This does not rule out other layers, training procedures or guidance objectives.
+- **Audit:**
+  - **Numerics:** zero strength reproduces the baseline bit-for-bit under matched execution, and batching choices
+    do not change any conclusion.
+  - **TFG predictor:** well calibrated on clean images (slope 0.92) but poorly calibrated on the intermediate
+    estimates it guides (0.58). Correct gradients optimize an unreliable signal. A second predictor shares the
+    failure, so the ensemble experiment is not justified.
+  - **Statistics:** with 9 shared scenes and no multiple-comparison adjustment, the late-steering comparisons are
+    statistically inconclusive. In practice they give less useful blur: respond and preserve in at most 5/9, on
+    target in at most 1/9, against BokehDiff's 8/9 and 7/9.
+- **Post-hoc blur caveat:** it is also the reference that scene change and the radius measurement are built on. Its
+  scores are therefore circular, and its limits (depth variation, boundaries, optical look, transparency) need an
+  independent reference.
+- **Next:** close this pilot; return to BokehDiff and transparent-object editing.
 
 ## BokehDiff (one-step diffusion bokeh editor)
 
