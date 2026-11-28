@@ -608,3 +608,44 @@ Every deviation from the Design is listed below with the moment it was decided.
      The original outcome is kept in `smoke.json` (`revision`).
    - **Smoke observation, for the report:** at every m0, P reads ≈ 3.0 px while the independent DoG evaluator shows no
      background detail loss. The guidance satisfies its own predictor without producing blur the evaluator can see.
+
+## Full layer sweep (Nov 28, 2026): plan, frozen before it ran
+
+**Why.** The pilot gave the full sweep only to the layer winning a 4-scene screen. Mid block scored 2/4, the
+attention and late layers 1/4: a one-scene margin. The attention layer, the kind used in related work, never got a
+fair test. Dev prompts only; **the 12 confirmation prompts stay ungenerated.**
+
+**What runs** (`sweep48b.py`, output `outputs/pareto48L/`, so the pilot's records stay untouched):
+- **Layers:** `attn` (`up_blocks[1].attentions[1]`), `late` (`up_blocks[2].resnets[2]`) and `mid` (`mid_block`,
+  rerun so all three share hardware).
+- **Grid per layer:** strengths m ∈ {0.5, 1, 2} (the per-layer grids chosen by the pilot's smoke stage, identical
+  for all three) × schedules {early, middle, late, all} × 12 dev prompts.
+- **Unchanged from the pilot:** the CamEdit RFM directions, the noise-alignment filters and γ0. Nothing is
+  retrained.
+- **Random-direction control at every configuration:** the same norm-scaled additive hook with a seeded random
+  direction of the layer's size (the pilot ran it at the selected configuration only).
+- **Hardware floor:** `narfm|mid|m0|all` (s = 0, γ = 0, the unsteered baseline on this GPU), scored against the
+  pilot's frozen references.
+- **Order** (resumable after a pod limit): learned attn, late, mid; then random attn, late, mid.
+
+**Scoring:** the pilot's frozen references, regions, metrics and rules (`rules48.json`, centroid 36.7 px), on the 10
+eligible dev scenes.
+
+**Decision, per layer.** These are the pilot's selection and gate rules, applied to each layer separately:
+- **Repeatable response:** a configuration responds in ≥ ⌈2n/3⌉ = 7/10 cases.
+- **Gate:** some configuration has response ≥ 7/10 **and** response ∧ preserved ≥ 7/10.
+- **Reported, not gated:**
+  - on target (|r − 3| ≤ 1.33);
+  - learned minus random on "response ∧ preserved" at each configuration (exact sign test, unadjusted; the number
+    of tests is stated);
+  - median scene change;
+  - number of scenes with measurable radius.
+- **If a layer passes the gate:** that is a dev result only. Held-out confirmation would need its own frozen
+  addendum.
+
+**Figure:**
+- x = measured radius minus the 3 px target, on scenes where the radius is measurable;
+- y = scene change;
+- median and IQR per configuration over the 10 eligible scenes;
+- configurations with fewer than 5 measurable scenes in a separate strip, not on the axis;
+- learned and random directions shown separately.
